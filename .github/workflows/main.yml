@@ -1,11 +1,11 @@
-name: The Real Final RDP (v22 - No Software)
+name: The Real Final RDP (v23 - Secure Key)
 on:
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 360 # گۆڕدرا بۆ 6 کاتژمێر
+    timeout-minutes: 360
     steps:
       - name: Configure RDP
         run: |
@@ -30,10 +30,12 @@ jobs:
           echo "RDP_PASS=$password" >> $env:GITHUB_ENV
 
       - name: Connect to Tailscale
+        env:
+          TS_AUTHKEY: ${{ secrets.TS_AUTHKEY }}
         run: |
           Invoke-WebRequest -Uri "https://pkgs.tailscale.com/stable/tailscale-setup-latest.exe" -OutFile "$env:TEMP\tailscale.exe"
           Start-Process "$env:TEMP\tailscale.exe" -ArgumentList "/S" -Wait
-          & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=tskey-auth-k9xFAv4sWz11CNTRL-sykpPDFGKJjZBFZSUsFhJjLw6stoui1w --hostname=gh-runner-$env:GITHUB_RUN_ID
+          & "$env:ProgramFiles\Tailscale\tailscale.exe" up --authkey=$env:TS_AUTHKEY --hostname=gh-runner-$env:GITHUB_RUN_ID
           $tsIP = & "$env:ProgramFiles\Tailscale\tailscale.exe" ip -4
           echo "TAILSCALE_IP=$tsIP" >> $env:GITHUB_ENV
 
@@ -49,4 +51,4 @@ jobs:
         run: |
           Write-Host "Session is now active. It will remain open for approximately 6 hours."
           Write-Host "Press Ctrl+C in the log window to cancel the workflow earlier if needed."
-          Start-Sleep -Seconds 21300 # نزیکەی 6 کاتژمێر
+          Start-Sleep -Seconds 21300
